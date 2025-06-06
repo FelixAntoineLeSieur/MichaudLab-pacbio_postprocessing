@@ -1,0 +1,165 @@
+repository_type: pipeline
+
+nf_core_version: 3.3.1
+
+lint:
+  files_unchanged:
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/ISSUE_TEMPLATE/config.yml
+    - .github/ISSUE_TEMPLATE/feature_request.yml
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/branch.yml
+    - .github/workflows/linting_comment.yml
+    - .github/workflows/linting.yml
+    - .github/CONTRIBUTING.md
+    - .github/.dockstore.yml
+    - .github/CONTRIBUTING.md
+    - LICENSE
+    - .prettierignore
+    - .prettierignore
+    - .prettierignore
+    - .github/CONTRIBUTING.md
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .prettierignore
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/ISSUE_TEMPLATE/config.yml
+    - .github/ISSUE_TEMPLATE/feature_request.yml
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/branch.yml
+    - .github/workflows/linting_comment.yml
+    - .github/workflows/linting.yml
+    - .github/CONTRIBUTING.md
+    - .github/.dockstore.yml
+    - .github/CONTRIBUTING.md
+    - LICENSE
+    - .prettierignore
+    - .prettierignore
+    - .prettierignore
+    - .github/CONTRIBUTING.md
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .prettierignore
+    - CODE_OF_CONDUCT.md
+    - assets/nf-core-pacbio_postprocessing_logo_light.png
+    - docs/images/nf-core-pacbio_postprocessing_logo_light.png
+    - docs/images/nf-core-pacbio_postprocessing_logo_dark.png
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/CONTRIBUTING.md
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - assets/email_template.txt
+    - docs/README.md
+  nextflow_config: false
+  nf_test_content: false
+  multiqc_config:
+    - report_comment
+  files_exist:
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/ISSUE_TEMPLATE/feature_request.yml
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/CONTRIBUTING.md
+    - .github/.dockstore.yml
+    - .github/workflows/branch.yml
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - .github/workflows/linting_comment.yml
+    - .github/workflows/linting.yml
+    - conf/igenomes.config
+    - .prettierignore
+    - .prettierrc.yml
+    - CITATIONS.md
+    - CHANGELOG.md
+    - LICENSE
+    - assets/email_template.html
+    - assets/sendmail_template.txt
+    - assets/email_template.txt
+    - docs/output.md
+    - docs/README.md
+    - docs/usage.md
+    - conf/test.config
+    - conf/test_full.config
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - nf-test.config
+    - tests/default.nf.test
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/ISSUE_TEMPLATE/feature_request.yml
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/CONTRIBUTING.md
+    - .github/.dockstore.yml
+    - .github/workflows/branch.yml
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - .github/workflows/linting_comment.yml
+    - .github/workflows/linting.yml
+    - .prettierignore
+    - .prettierrc.yml
+    - CITATIONS.md
+    - CHANGELOG.md
+    - LICENSE
+    - assets/email_template.html
+    - assets/sendmail_template.txt
+    - assets/email_template.txt
+    - docs/output.md
+    - docs/README.md
+    - docs/usage.md
+    - conf/test.config
+    - conf/test_full.config
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - nf-test.config
+    - tests/default.nf.test
+    - CODE_OF_CONDUCT.md
+    - assets/nf-core-pacbio_postprocessing_logo_light.png
+    - docs/images/nf-core-pacbio_postprocessing_logo_light.png
+    - docs/images/nf-core-pacbio_postprocessing_logo_dark.png
+    - .github/ISSUE_TEMPLATE/config.yml
+    - .github/workflows/awstest.yml
+    - .github/workflows/awsfulltest.yml
+  readme:
+    - nextflow_badge
+    - nextflow_badge
+    - nfcore_template_badge
+    - nextflow_badge
+  included_configs: false
+
+template:
+  org: MichaudLab
+  name: Pacbio_Postprocessing
+  description:
+    Includes all steps done after WGS WDL analysis, including sneding data
+    to GeneYX and reports
+  author: Felix-Antoine Le Sieur
+  version: 1.0.0
+  force: true
+  outdir: .
+  skip_features:
+    - github
+    - ci
+    - github_badges
+    - nf_core_configs
+    - code_linters
+    - citations
+    - gitpod
+    - codespaces
+    - fastqc
+    - changelog
+    - license
+    - email
+    - adaptivecard
+    - slackreport
+    - documentation
+    - test_config
+    - nf-test
+    - seqera_platform
+    - rocrate
+    - vscode
+  is_nfcore: false
