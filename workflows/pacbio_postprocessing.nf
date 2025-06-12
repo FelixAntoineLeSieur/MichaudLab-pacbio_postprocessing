@@ -3,7 +3,10 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+import groovy.json.JsonSlurper
+
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { PEDDY                  } from '../modules/nf-core/peddy/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -20,9 +23,27 @@ workflow PACBIO_POSTPROCESSING {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
     main:
-
-    ch_versions = Channel.empty()
+    ch_versions      = Channel.empty()
     ch_multiqc_files = Channel.empty()
+    reports          = Channel.empty()
+
+
+    ch_samplesheet.view{r -> "NewSamplesheet: $r"}
+    ch_parse_input = ch_samplesheet
+        .map{ meta, outputs, bam -> 
+        [meta, outputs.humanwgs_haplotagged_bam_mosdepth_region_bed]}
+    ch_parse_input.view{w -> "input: $w"}
+
+
+    //Gather all possible reports for MULTIQC
+
+    if (params.inputFamily) {
+    // PEDDY module
+    chPEDDYInput = ch_samplesheet.map{
+        meta, output, bam -> 
+        [meta,outputs.humanwgs_family.pedigree]}
+        
+    }
 
     //
     // Collate and save software versions
@@ -34,6 +55,7 @@ workflow PACBIO_POSTPROCESSING {
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
+
 
 
     //
@@ -55,6 +77,11 @@ workflow PACBIO_POSTPROCESSING {
         ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
+    ch_multiqc_files.view{v -> "multiqcBef:$v"}
+    ch_samplesheet.view{p-> "samplesheet:$p"}
+
+    ch_multiqc_files.mix(reports)
+    ch_multiqc_files.view{u ->"posmulti:$u"}
 
     MULTIQC (
         ch_multiqc_files.collect(),
