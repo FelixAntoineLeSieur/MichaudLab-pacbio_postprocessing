@@ -13,18 +13,30 @@
         "errorMessage": "Sample name must be provided and cannot contain spaces",
         "meta": ["id"]
       },
+      "samplesheet": {
+        "type": "string",
+        "pattern": "^\\S+$",
+        "errorMessage": "Json samplesheet for WGS WDL must be provided",
+      },
       "outputJSON": {
         "type": "string",
         "format": "file-path",
         "exists": true,
         "errorMessage": "Path to the analysis output JSON summary must be provided "
       },
-      "bam_path": {
+      "shortreadsGVCF": {
+        "type": "string",
+        "format": "file-path",
+        "exists": true,
+        "pattern": "^\\S+\\.g(\\.)?vcf(\\.gz)?$",
+        "errorMessage": "Path to the shortread gvcf file of the sample (generally in Narval under ~/projects/ctb-rallard/COMMUN/PRAGMatIQ-EMG/archives/.../[name].dragen.hardfiltered.gvcf.gz)"
+      },
+      "bamHaplotagged": {
         "type": "string",
         "format": "file-path",
         "exists": true,
         "pattern": "^\\S+\\.bam$",
-        "errorMessage": "Path to the raw BAM file of the sample"
+        "errorMessage": "Path to the happlotagged BAM file of the sample (generally in the S3-Storage folder)"
       },
       "group": {
         "type": "string",

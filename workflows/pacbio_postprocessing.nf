@@ -7,6 +7,7 @@ import groovy.json.JsonSlurper
 
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { PEDDY                  } from '../modules/nf-core/peddy/main'
+include { VALIDATE_44SNPS        } from '../subworkflows/local/validate_44snps'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -28,22 +29,53 @@ workflow PACBIO_POSTPROCESSING {
     reports          = Channel.empty()
 
 
-    ch_samplesheet.view{r -> "NewSamplesheet: $r"}
-    ch_parse_input = ch_samplesheet
-        .map{ meta, outputs, bam -> 
-        [meta, outputs.humanwgs_haplotagged_bam_mosdepth_region_bed]}
-    ch_parse_input.view{w -> "input: $w"}
 
+    def genomeFasta = file(params.genomeFasta)
+    def genomeFai = file(genomeFasta + ".fai")
+    def genomeDict = file(params.genomeFasta.substring(0,params.genomeFasta.indexOf(".")) + ".dict")
 
-    //Gather all possible reports for MULTIQC
+    //Subworkflow to validate our SNV vcf with the short reads GVCF
+    if (params.validate44SNP && file(params.validationSNPBed, checkIfExists: true).exists()){
+        ch_validate_input = ch_samplesheet.multiMap{
+            meta,output,rawBam,gvcf,bam_haplo ->
+            def jsonSlurper = new JsonSlurper()
+            def outputJSON = jsonSlurper.parseText(file(output,checkIfExists: true).text)
+            //Old format of outputs json
+            if (outputJSON.humanwgs_sample_phased_small_variant_vcfs){
+                lrVCF = outputJSON.humanwgs_sample_phased_small_variant_vcfs.data
+                lrVCF_index = outputJSON.humanwgs_sample_phased_small_variant_vcfs.data_index
+            } else if (outputJSON.humanwgs_singleton_phased_small_variant_vcf){
+                //Newer format distinguishes between family and singleton
+                if ((meta.outputPrefix == 'humanwgs_singleton') && file(outputJSON.humanwgs_singleton_phased_small_variant_vcf,checkIfExists: true).exists()){
+                lrVCF = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf,checkIfExists: true)
+                lrVCF_index = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf_index,checkIfExists: true)
+                } else if ((meta.outputPrefix == 'humanwgs_family') && file(outputJSON.humanwgs_family_phased_small_variant_vcf,checkIfExists: true).exists()){
+                file(outputJSON.humanwgs_family_phased_small_variant_vcf,checkIfExists: true)
+                lrVCF = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf,checkIfExists: true)
+                lrVCF_index = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf_index,checkIfExists: true)
+                }
+            else{
+                error("The VCF file was not found in the output json for sample $meta.id")
+            }
+            }
+            srGVCF = gvcf
+            srGVCF_index = ((srGVCF != []) && (file(srGVCF + ".tbi").exists())) ? file(srGVCF + ".tbi") : []
+            lr:[meta,[lrVCF],[lrVCF_index],[file(params.validationSNPBed,checkIfExists: true)]]
+            sr:[meta,[srGVCF],[srGVCF_index],[file(params.validationSNPBed,checkIfExists: true)]]
+        }
+
+        ch_validate_output = VALIDATE_44SNPS(ch_validate_input,genomeFasta,genomeFai,genomeDict)
+    }
 
     if (params.inputFamily) {
     // PEDDY module
     chPEDDYInput = ch_samplesheet.map{
         meta, output, bam -> 
-        [meta,outputs.humanwgs_family.pedigree]}
+        [meta,output.humanwgs_family_pedigree]}
         
     }
+
+    //Gather all possible reports for MULTIQC
 
     //
     // Collate and save software versions
@@ -77,11 +109,9 @@ workflow PACBIO_POSTPROCESSING {
         ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
-    ch_multiqc_files.view{v -> "multiqcBef:$v"}
-    ch_samplesheet.view{p-> "samplesheet:$p"}
 
-    ch_multiqc_files.mix(reports)
-    ch_multiqc_files.view{u ->"posmulti:$u"}
+    ch_multiqc_files = ch_multiqc_files.mix(ch_samplesheet.map{meta,output,rawBam,gvcf,bam_haplo -> 
+        [output.parent.parent]}).collect()
 
     MULTIQC (
         ch_multiqc_files.collect(),

@@ -135,5 +135,16 @@
     {
       "$ref": "#/$defs/generic_options"
     }
-  ]
+  ],
+  "properties": {
+    "inputFamily": {
+      "type": "string"
+    },
+    "validationSNPBed": {
+      "type": "string",
+      "default": "assets/snps44.bed",
+      "description": "BED file containing the regions to use for snp validation for short vs long reads",
+      "format": "file-path"
+    }
+  }
 }

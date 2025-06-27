@@ -13,18 +13,17 @@
         "errorMessage": "Sample name must be provided and cannot contain spaces",
         "meta": ["id"]
       },
-      "OutputDir": {
+      "samplesheet": {
         "type": "string",
-        "format": "directory-path",
-        "exists": true,
-        "errorMessage": "Path to the analysis output directory must be provided "
+        "pattern": "^\\S+.json$",
+        "errorMessage": "Json samplesheet for WGS WDL must be provided",
       },
-      "Bam_path": {
+      "bam_haplotagged": {
         "type": "string",
         "format": "file-path",
         "exists": true,
         "pattern": "^\\S+\\.bam$",
-        "errorMessage": "Path to the raw BAM file of the sample"
+        "errorMessage": "Path to the happlotagged BAM file of the sample (generally in the S3-Storage folder)"
       },
       "group": {
         "type": "string",

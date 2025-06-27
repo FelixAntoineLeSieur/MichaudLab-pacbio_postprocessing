@@ -7,7 +7,7 @@
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
+import groovy.json.JsonSlurper
 include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'
@@ -76,14 +76,18 @@ workflow PIPELINE_INITIALISATION {
         Channel.fromList(samplesheetToList(params
         .inputSingleton, "assets/schema_input_singleton.json"))
             .map {
-                meta,output,bam_path->
-                meta += ['role': 'proband']
+                meta,samplesheet,output,shortGVCF,bam_haplo->
+                if (!shortGVCF && params.validate44SNP) {
+                    error("If 'validate44SNP' params is 'true', provide short read GVCF for ALL samples. Set it to 'false' to skip SNP validation and this error")
+                }
                 def jsonSlurper = new JsonSlurper()
-                outputJSON = jsonSlurper.parseText(file(output,checkIfExists: true).text)
-                def bam = file(bam_path, checkIfExists: true)
-                [meta,outputJSON,bam]
-                // meta, output, bam -> 
-                //     [ [ role:"proband" ] + meta, output, bam ]
+                sampleJSON = jsonSlurper.parseText(file(samplesheet,checkIfExists: true).text)
+                meta += ['role': 'proband','sex': sampleJSON.humanwgs_singleton_sex,'outputPrefix': 'humanwgs_singleton']
+                rawBam = file(sampleJSON.humanwgs_singleton_hifi_reads[0])
+                def gvcf = shortGVCF ? file(shortGVCF, checkIfExists: true) : []
+                
+                def bam = bam_haplo ? file(bam_haplo, checkIfExists: true) : []
+                [meta,output,rawBam,gvcf,bam]
             }.set { ch_samplesheet }
     }
     else if (!params.inputSingleton && params.inputFamily) {
