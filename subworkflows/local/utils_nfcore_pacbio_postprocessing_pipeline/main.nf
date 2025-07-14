@@ -76,18 +76,32 @@ workflow PIPELINE_INITIALISATION {
         Channel.fromList(samplesheetToList(params
         .inputSingleton, "assets/schema_input_singleton.json"))
             .map {
-                meta,samplesheet,output,shortGVCF,bam_haplo->
+                meta,inputs,outputs,shortGVCF,bam_haplo->
                 if (!shortGVCF && params.validate44SNP) {
                     error("If 'validate44SNP' params is 'true', provide short read GVCF for ALL samples. Set it to 'false' to skip SNP validation and this error")
                 }
                 def jsonSlurper = new JsonSlurper()
-                sampleJSON = jsonSlurper.parseText(file(samplesheet,checkIfExists: true).text)
-                meta += ['role': 'proband','sex': sampleJSON.humanwgs_singleton_sex,'outputPrefix': 'humanwgs_singleton']
-                rawBam = file(sampleJSON.humanwgs_singleton_hifi_reads[0])
+                sampleJSON = jsonSlurper.parseText(file(inputs,checkIfExists: true).text)
+                if (sampleJSON.humanwgs_cohort) {
+                meta += ['role': 'proband','sex': sampleJSON.humanwgs_cohort.samples.sex,'outputPrefix': 'humanwgs_cohort']
+                rawBam = file(sampleJSON.humanwgs_cohort.samples.movie_bams[0])
+                }
+                else if (sampleJSON.humanwgs_singleton_sex) {
+                    meta += ['role': 'proband','sex': sampleJSON.humanwgs_singleton_sex,'outputPrefix': 'humanwgs_singleton']
+                    rawBam = file(sampleJSON.humanwgs_singleton_hifi_reads[0])
+                }
+                else if (sampleJSON.humanwgs_family_family.samples[0].sex) {
+                    meta += ['role': 'proband','sex': sampleJSON.humanwgs_family_family.samples[0].sex,'outputPrefix': 'humanwgs_family']
+                    rawBam = file(sampleJSON.humanwgs_family_family.samples[0].hifi_reads[0])
+                }
+                else {
+                    error("Could nor parse input json for $meta.id")
+                }
+                
                 def gvcf = shortGVCF ? file(shortGVCF, checkIfExists: true) : []
                 
                 def bam = bam_haplo ? file(bam_haplo, checkIfExists: true) : []
-                [meta,output,rawBam,gvcf,bam]
+                [meta,inputs,outputs,rawBam,gvcf,bam]
             }.set { ch_samplesheet }
     }
     else if (!params.inputSingleton && params.inputFamily) {

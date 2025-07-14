@@ -13,10 +13,10 @@
         "errorMessage": "Sample name must be provided and cannot contain spaces",
         "meta": ["id"]
       },
-      "samplesheet": {
+      "inputsJSON": {
         "type": "string",
         "pattern": "^\\S+$",
-        "errorMessage": "Json samplesheet for WGS WDL must be provided",
+        "errorMessage": "Path to the analysis input JSON summary must be provided",
       },
       "outputJSON": {
         "type": "string",

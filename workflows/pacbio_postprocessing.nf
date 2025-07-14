@@ -37,26 +37,25 @@ workflow PACBIO_POSTPROCESSING {
     //Subworkflow to validate our SNV vcf with the short reads GVCF
     if (params.validate44SNP && file(params.validationSNPBed, checkIfExists: true).exists()){
         ch_validate_input = ch_samplesheet.multiMap{
-            meta,output,rawBam,gvcf,bam_haplo ->
+            meta,input,output,rawBam,gvcf,bam_haplo ->
             def jsonSlurper = new JsonSlurper()
             def outputJSON = jsonSlurper.parseText(file(output,checkIfExists: true).text)
             //Old format of outputs json
             if (outputJSON.humanwgs_sample_phased_small_variant_vcfs){
                 lrVCF = outputJSON.humanwgs_sample_phased_small_variant_vcfs.data
                 lrVCF_index = outputJSON.humanwgs_sample_phased_small_variant_vcfs.data_index
-            } else if (outputJSON.humanwgs_singleton_phased_small_variant_vcf){
-                //Newer format distinguishes between family and singleton
-                if ((meta.outputPrefix == 'humanwgs_singleton') && file(outputJSON.humanwgs_singleton_phased_small_variant_vcf,checkIfExists: true).exists()){
+            }
+            //Newer format distinguishes between family and singleton
+            else if ((meta.outputPrefix == 'humanwgs_singleton') && outputJSON.humanwgs_singleton_phased_small_variant_vcf){
                 lrVCF = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf,checkIfExists: true)
                 lrVCF_index = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf_index,checkIfExists: true)
-                } else if ((meta.outputPrefix == 'humanwgs_family') && file(outputJSON.humanwgs_family_phased_small_variant_vcf,checkIfExists: true).exists()){
-                file(outputJSON.humanwgs_family_phased_small_variant_vcf,checkIfExists: true)
+            }
+            else if ((meta.outputPrefix == 'humanwgs_family') && outputJSON.humanwgs_family_phased_small_variant_vcf){
                 lrVCF = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf,checkIfExists: true)
                 lrVCF_index = file(outputJSON.humanwgs_singleton_phased_small_variant_vcf_index,checkIfExists: true)
-                }
+            }
             else{
                 error("The VCF file was not found in the output json for sample $meta.id")
-            }
             }
             srGVCF = gvcf
             srGVCF_index = ((srGVCF != []) && (file(srGVCF + ".tbi").exists())) ? file(srGVCF + ".tbi") : []
@@ -64,17 +63,16 @@ workflow PACBIO_POSTPROCESSING {
             sr:[meta,[srGVCF],[srGVCF_index],[file(params.validationSNPBed,checkIfExists: true)]]
         }
 
-        ch_validate_output = VALIDATE_44SNPS(ch_validate_input,genomeFasta,genomeFai,genomeDict)
+        ch_validate_output = VALIDATE_44SNPS(ch_validate_input.lr,ch_validate_input.sr,genomeFasta,genomeFai,genomeDict)
+        //ch_validate_output.view{r->"OUTPUT: $r"}
     }
 
     if (params.inputFamily) {
     // PEDDY module
-    chPEDDYInput = ch_samplesheet.map{
-        meta, output, bam -> 
-        [meta,output.humanwgs_family_pedigree]}
-        
+    // chPEDDYInput = ch_samplesheet.map{
+  
+    // }
     }
-
     //Gather all possible reports for MULTIQC
 
     //
@@ -110,7 +108,7 @@ workflow PACBIO_POSTPROCESSING {
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
 
-    ch_multiqc_files = ch_multiqc_files.mix(ch_samplesheet.map{meta,output,rawBam,gvcf,bam_haplo -> 
+    ch_multiqc_files = ch_multiqc_files.mix(ch_samplesheet.map{meta,input,output,rawBam,gvcf,bam_haplo -> 
         [output.parent.parent]}).collect()
 
     MULTIQC (
